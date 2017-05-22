@@ -16,11 +16,11 @@ tf.app.flags.DEFINE_string('train_dir', './checkpoints/train_store_conv_lstm',
                             """dir to store trained net""")
 tf.app.flags.DEFINE_integer('max_step', 200000,
                             """max num of steps""")
-tf.app.flags.DEFINE_integer('batch_size', 8,
+tf.app.flags.DEFINE_integer('batch_size', 16,
                             """batch size for training""")
-tf.app.flags.DEFINE_string('shape', '64x64',
+tf.app.flags.DEFINE_string('shape', '256x256',
                             """ shape of the test image """)
-tf.app.flags.DEFINE_float('lr', 0.001,
+tf.app.flags.DEFINE_float('lr', 0.0003,
                             """ learning rate """)
 
 shape = FLAGS.shape.split('x')
