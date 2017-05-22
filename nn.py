@@ -75,36 +75,12 @@ def conv_layer(inputs, kernel_size, stride, num_features, idx, nonlinearity=None
     elif d3d:
       weights = _variable('weights', shape=[kernel_size,kernel_size,kernel_size,input_channels,num_features],initializer=tf.contrib.layers.xavier_initializer_conv2d())
 
-    # pad it mobius
-    if d2d:
-      top = inputs[:,-1:]
-      bottom = inputs[:,:1]
-      inputs = tf.concat([top, inputs, bottom], axis=1)
-      if FLAGS.system == "em":
-        left = inputs[:,:,-1:] # make zero
-        right = inputs[:,:,:1] # make zero
-      else:
-        left = tf.zeros_like(inputs[:,:,-1:]) # make zero
-        right = tf.zeros_like(inputs[:,:,:1]) # make zero
-      inputs = tf.concat([left, inputs, right], axis=2)
-
-    if d3d:
-      top = inputs[:,-1:]
-      bottom = inputs[:,:1]
-      inputs = tf.concat([top, inputs, bottom], axis=1)
-      left = inputs[:,:,-1:]
-      right = inputs[:,:,:1]
-      inputs = tf.concat([left, inputs, right], axis=2)
-      z_in = tf.zeros_like(inputs[:,:,:,-1:])
-      z_out = tf.zeros_like(inputs[:,:,:,:1])
-      inputs = tf.concat([z_in, inputs, z_out], axis=3)
-
     biases = _variable('biases',[num_features],initializer=tf.contrib.layers.xavier_initializer_conv2d())
 
     if d2d:
-      conv = tf.nn.conv2d(inputs, weights, strides=[1, stride, stride, 1], padding='VALID')
+      conv = tf.nn.conv2d(inputs, weights, strides=[1, stride, stride, 1], padding='SAME')
     elif d3d:
-      conv = tf.nn.conv3d(inputs, weights, strides=[1, stride, stride, stride, 1], padding='VALID')
+      conv = tf.nn.conv3d(inputs, weights, strides=[1, stride, stride, stride, 1], padding='SAME')
 
     conv = tf.nn.bias_add(conv, biases)
     if nonlinearity is not None:
@@ -127,32 +103,6 @@ def transpose_conv_layer(inputs, kernel_size, stride, num_features, idx, nonline
       print("transpose conv layer does not support non 2d or 3d inputs")
       exit()
 
-    # pad it mobius
-    if d2d:
-      inputs_pad = inputs
-      top = inputs_pad[:,-1:]
-      bottom = inputs_pad[:,:1]
-      inputs_pad = tf.concat([top, inputs_pad, bottom], axis=1)
-      if FLAGS.system == "em":
-        left = inputs_pad[:,:,-1:]
-        right = inputs_pad[:,:,:1]
-      else:
-        left = tf.zeros_like(inputs_pad[:,:,-1:]) # make zero
-        right = tf.zeros_like(inputs_pad[:,:,:1]) # make zero
-      inputs_pad = tf.concat([left, inputs_pad, right], axis=2)
-
-    if d3d:
-      inputs_pad = inputs
-      top = inputs[:,-1:]
-      bottom = inputs[:,:1]
-      inputs_pad = tf.concat([top, inputs_pad, bottom], axis=1)
-      left = inputs_pad[:,:,-1:]
-      right = inputs_pad[:,:,:1]
-      inputs_pad = tf.concat([left, inputs_pad, right], axis=2)
-      z_in = tf.zeros_like(inputs_pad[:,:,:,-1:])
-      z_out = tf.zeros_like(inputs_pad[:,:,:,:1])
-      inputs_pad = tf.concat([z_in, inputs_pad, z_out], axis=3)
-
     if d2d: 
       weights = _variable('weights', shape=[kernel_size,kernel_size,num_features,input_channels],initializer=tf.contrib.layers.xavier_initializer_conv2d())
     elif d3d:
@@ -162,13 +112,11 @@ def transpose_conv_layer(inputs, kernel_size, stride, num_features, idx, nonline
     batch_size = tf.shape(inputs)[0]
 
     if d2d:
-      output_shape = tf.stack([tf.shape(inputs_pad)[0], tf.shape(inputs_pad)[1]*stride, tf.shape(inputs_pad)[2]*stride, num_features]) 
-      conv = tf.nn.conv2d_transpose(inputs_pad, weights, output_shape, strides=[1,stride,stride,1], padding='SAME')
-      conv = conv[:,2:-2,2:-2]
+      output_shape = tf.stack([tf.shape(inputs)[0], tf.shape(inputs)[1]*stride, tf.shape(inputs)[2]*stride, num_features]) 
+      conv = tf.nn.conv2d_transpose(inputs, weights, output_shape, strides=[1,stride,stride,1], padding='SAME')
     elif d3d:
-      output_shape = tf.stack([tf.shape(inputs)[0], tf.shape(inputs_pad)[1]*stride, tf.shape(inputs_pad)[2]*stride, tf.shape(inputs_pad)[3]*stride, num_features]) 
-      conv = tf.nn.conv3d_transpose(inputs_pad, weights, output_shape, strides=[1,stride,stride,stride,1], padding='SAME')
-      conv = conv[:,2:-2,2:-2,2:-2]
+      output_shape = tf.stack([tf.shape(inputs)[0], tf.shape(inputs)[1]*stride, tf.shape(inputs)[2]*stride, tf.shape(inputs)[3]*stride, num_features]) 
+      conv = tf.nn.conv3d_transpose(inputs, weights, output_shape, strides=[1,stride,stride,stride,1], padding='SAME')
 
     conv_biased = tf.nn.bias_add(conv, biases)
     if nonlinearity is not None:
