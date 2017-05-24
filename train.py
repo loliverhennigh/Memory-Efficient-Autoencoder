@@ -12,7 +12,7 @@ from inputs import *
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_dir', './checkpoints/train_store_conv_lstm',
+tf.app.flags.DEFINE_string('train_dir', './checkpoints/train_store_res',
                             """dir to store trained net""")
 tf.app.flags.DEFINE_integer('max_step', 200000,
                             """max num of steps""")
@@ -33,7 +33,7 @@ def train():
     x = tf.placeholder(tf.float32, [FLAGS.batch_size] + shape + [1])
 
     x_compressed = standard_res_encoder(x)
-    x_prime = standard_res_decoding(x_compressed, 1)
+    x_prime = standard_res_decoder(x_compressed, 1)
 
     # calc total loss
     tf.summary.image('true_x', x)

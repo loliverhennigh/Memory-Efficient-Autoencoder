@@ -23,4 +23,3 @@ def make_batch(batch_size, shape, input_maker=make_input_wavy_2d):
   return wavy_batch
 
 
-

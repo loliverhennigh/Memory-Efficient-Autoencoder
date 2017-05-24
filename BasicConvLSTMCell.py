@@ -83,7 +83,7 @@ class BasicConvLSTMCell(ConvRNNCell):
         c, h = state
       else:
         c, h = tf.split(axis=3, num_or_size_splits=2, value=state)
-      concat = _conv_linear([inputs, h], self.filter_size, self.num_features * 4, True)
+      concat = _conv_linear([inputs, h], self.filter_size, self.num_features * 4, True, scope=scope)
 
       # i = input_gate, j = new_input, f = forget_gate, o = output_gate
       i, j, f, o = tf.split(axis=3, num_or_size_splits=4, value=concat)
