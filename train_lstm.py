@@ -7,12 +7,13 @@ import tensorflow as tf
 
 from model import *
 from inputs import *
+from utils import *
 
 #import tf.contrib.rnn.BasicConvLSTMCell as BasicConvLSTMCell
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('train_dir', './checkpoints/train_store_res',
+tf.app.flags.DEFINE_string('train_dir', './checkpoints/train_store_conv_lstm',
                             """dir to store trained net""")
 tf.app.flags.DEFINE_integer('max_step', 20000,
                             """max num of steps""")
@@ -30,14 +31,15 @@ def train():
   """Train ring_net for a number of steps."""
   with tf.Graph().as_default():
     # make inputs
-    x = tf.placeholder(tf.float32, [FLAGS.batch_size] + shape + [1])
+    x = tf.placeholder(tf.float32, [FLAGS.batch_size, 4, shape[0]/2, shape[1]/2, 1])
 
-    x_compressed = standard_res_encoder(x)
-    x_prime = standard_res_decoder(x_compressed, 1)
+    h_1, h_2 = conv_lstm_encoder(x)
+    x_prime = conv_lstm_decoder(h_1, h_2)
 
     # calc total loss
-    tf.summary.image('true_x', x)
-    tf.summary.image('generated_x', x_prime)
+    for i in xrange(4):
+      tf.summary.image('true_x_' + str(i), x[:,i])
+      tf.summary.image('generated_x_' + str(i), x_prime[:,i])
     loss = tf.nn.l2_loss(x - x_prime)
     tf.summary.scalar('loss', loss)
 
@@ -69,6 +71,7 @@ def train():
 
     for step in xrange(FLAGS.max_step):
       dat = make_batch(FLAGS.batch_size, shape)
+      dat = image_to_grid(dat, shape, 2)
       t = time.time()
       _, loss_r = sess.run([train_op, loss],feed_dict={x:dat})
       elapsed = time.time() - t
